@@ -8,6 +8,15 @@ allowed-tools: Read, Glob, Grep
 
 Audit a LinkedIn profile and produce an action plan that maximises its engagement and visibility to the people its owner wants to reach (recruiters, researchers, potential collaborators). Written for any profile owner - nothing here is tied to a specific person.
 
+## Requirements & caveats (read before first use)
+
+- **Supply the profile yourself.** The best input is LinkedIn's "Save to PDF" export (Profile -> More -> Save to PDF); pasted text also works. The skill does not browse LinkedIn on its own.
+- **The quality of the audit depends on your goals.** Without target roles, audience and current status, it will ask; give supporting documents (resume, goals notes) for sharper results.
+- **A PDF needs code execution plus a PDF skill or library** (`reportlab`/`weasyprint`). Otherwise you get an HTML or Markdown report to print to PDF yourself.
+- **Read-only by design.** It never posts, schedules or messages. A connected LinkedIn tool is only used to read, and only with your per-action approval.
+- **`allowed-tools` only applies in Claude Code.** Other surfaces ignore it; the hard rules below still apply everywhere.
+- **The timeline visual is best with the `flowchart-designer` skill installed too**; without it, you get a table.
+
 ## Hard rules (read-only, human in the loop)
 
 - **Read only.** Never edit the profile, never post, schedule, comment, connect or message anyone. Everything you produce is a recommendation or a draft for the owner to act on.

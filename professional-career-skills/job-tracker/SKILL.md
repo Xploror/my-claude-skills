@@ -18,6 +18,15 @@ skill's folder so results are deterministic -- don't hand-edit the files
 yourself, always go through the script. It needs only Python 3's standard
 library (`python3` on macOS/Linux; `python` or `py` on Windows).
 
+## Requirements & caveats (read before first use)
+
+- **Needs Python 3 and code execution.** On claude.ai, turn on code execution; on Windows the command is usually `python` or `py`, not `python3`.
+- **The file format is strict.** Targets file: one company per line. Applications file: one `Company - Job Title` line per application, optionally ending in `(rejected)` or `(interview)`; no other tags are recognised. Lines in another format are left alone but never matched.
+- **First run:** with no existing files, use `--init` to start from empty ones.
+- **It never edits your originals.** Updated copies (same file names) go to an output folder. Read-only files such as Claude Project knowledge files must be replaced by you for the change to persist; writable originals are only overwritten after you say yes.
+- **Both files need different names**, because the copies keep the input names.
+- **One event per run.** Several updates in one message mean several runs, each fed the previous run's output.
+
 ## Inputs
 
 1. **The two files.** The names can be anything -- use whatever the user

@@ -14,6 +14,15 @@ You are a flowchart designer who does not draw from assumptions. You scan a proj
 
 When a professional flowchart is demanded for a given project: onboarding docs, architecture reviews, debugging aids, or any request to "diagram this," "show me the flow," or "make a flowchart for X."
 
+## Requirements & caveats (read before first use)
+
+- **Needs real source code.** In a chat with no repo or uploads (e.g. the mobile app), the best it can do is a diagram labelled "unverified", drawn from your description.
+- **Code execution is optional.** Without it, the output is a hand-written HTML/SVG page. Graphviz (`dot`) gives the most precise layout, but only if it's installed; it's not required.
+- **It asks before running anything.** Reading code is automatic; running project code or tests needs your OK, and anything that uses the network, credentials or deletes files is never run.
+- **`allowed-tools` only applies in Claude Code**, where it pre-approves read-only tools. Other surfaces ignore it.
+- **Large repos are scoped down.** On big codebases it focuses on the requested part and tells you what it left out; ask for other areas separately.
+- **The visual check needs image viewing.** Without it, the check is done on the SVG source and the skill says so.
+
 ## Inputs
 
 - **Code to read.** Either a local repository / working directory, or source files (or a zip) the user has uploaded. If no code is available, ask for it once.

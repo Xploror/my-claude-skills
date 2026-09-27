@@ -7,6 +7,15 @@ description: Builds ATS-tailored resumes and one-page cover letters for a specif
 
 This skill packages a fixed resume and cover letter format so every application looks consistent, no matter which job or which applicant it's for. **Nothing in this skill is tied to a specific person.** Every name, phone number, email, address, school, employer, job title, and achievement referenced anywhere in this skill's files is a bracketed placeholder or a generic pattern description — never real personal data. When you use this skill, you supply one specific applicant's real details fresh, every time; never carry over a name, contact detail, or achievement from a previous use of this skill into a new one.
 
+## Requirements & caveats (read before first use)
+
+- **.docx output needs Node.js and the `docx` npm package, which is not preinstalled on most machines.** Install it with `npm install --prefix <folder> docx`, then run with `NODE_PATH=<folder>/node_modules`. Running from that folder without `NODE_PATH` fails, because Node resolves `docx` relative to the helper script. See "Using the script".
+- **With no network access** (e.g. a sandbox without internet), `docx` can't be installed. Output falls back to a docx skill if one is available, otherwise formatted Markdown in the same structure.
+- **The one-page check needs LibreOffice (`soffice`).** If it's missing or fails to start, the check is reported as skipped, not passed; open the file and check it yourself.
+- **Link fields must be full URLs** (`https://...`) for LinkedIn, GitHub and website, or the helpers stop with an error. All six identity fields are required on both documents.
+- **Finding the company address needs web search.** Without it, the skill asks you.
+- **Layout is US Letter** with fixed margins. A4 or other sizes need `RESUME_PAGE_WIDTH` / `RESUME_MARGIN` changed together in `scripts/docx_helpers.js`.
+
 ## Before you start
 
 You need three things before building anything:
