@@ -6,7 +6,7 @@ This is a fully anonymized template showing the target register: confident, flow
 
 [Your Full Name]
 [Your Phone] | [Your Email]
-[LinkedIn] | [Personal Website]
+[LinkedIn] | [GitHub] | [Personal Website]
 
 [Date]
 

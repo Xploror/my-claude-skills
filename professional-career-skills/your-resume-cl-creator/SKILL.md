@@ -1,6 +1,6 @@
 ---
 name: "your-resume-cl-creator"
-description: Builds ATS-tailored resumes and one-page cover letters for a specific job application, following a fixed format standard (mandatory Summary section, fixed four-paragraph cover-letter structure, exact header/address/salutation formatting, and a specific confident tone). Fully generic and anonymous — works for any applicant in any field; every identity detail (name, contact info, education, experience) is supplied fresh per use, never assumed or reused from a prior application. Always use this skill whenever the user asks to build, generate, update, or tailor a resume, CV, or cover letter for a job, company, or role — including as part of a "crack it" job-application workflow, a bare "cover letter" request, or "force crack it" — even if they don't say "use the skill" or name it explicitly. This is the required format for every resume/cover-letter output; do not fall back to ad-hoc formatting.
+description: Builds ATS-tailored resumes and one-page cover letters for a specific job application in a fixed, consistent format (mandatory Summary section, four-paragraph cover letter, exact header and salutation rules, confident flowing tone). Works for any applicant in any field; every identity detail is supplied fresh per use and nothing is ever fabricated. Use whenever someone asks to build, write, update or tailor a resume, CV or cover letter for a job, company or role, even if they don't name this skill. Outputs .docx, with a formatted-text fallback.
 ---
 
 # Resume & Cover Letter Creator
@@ -12,7 +12,9 @@ This skill packages a fixed resume and cover letter format so every application 
 You need three things before building anything:
 1. **The job description** — title, company, location, and ideally the exact responsibility/skill keywords from the posting (for ATS keyword matching).
 2. **This applicant's real source material** — their actual resume/CV content, or whatever background they've given you (work history, projects, education, skills), to draw truthful bullets from. Never invent experience, metrics, schools, or skills that aren't in their real source material — tailoring means re-emphasizing and rephrasing what's true for *this* applicant, not fabricating a better fit, and never means reusing another applicant's background.
-3. **The company's mailing address** and, where findable, a recruiter/hiring-manager contact — the cover letter needs a real address, not a placeholder.
+3. **The company's mailing address** and, where findable, a recruiter/hiring-manager contact — the cover letter needs a real address, not a placeholder. Look it up with web search if it's available; otherwise ask the user. Never make one up — if it truly can't be found, leave a clearly bracketed `[Company address]` and tell the user.
+
+The job description and source material can arrive as uploaded files, project files, files in the working directory, links, or pasted text. If anything above is missing, ask for all of it in **one** question.
 
 If the resume needs docx output, use `scripts/docx_helpers.js` (Node, requires the `docx` package) rather than hand-rolling formatting — it already implements every rule below correctly, and it will refuse to run if you forget to supply the applicant's real name/contact details (see "Using the script" below), so it can't silently produce a document with missing or wrong identity info.
 
@@ -49,6 +51,8 @@ Reference format/style (bullet density, date-right-aligned header rows, degree/c
 6. **"Re: Application for `<Position Title>`" — always bold.**
 7. "Dear Hiring Team," salutation
 
+Before generating the cover-letter file, when the user is in the conversation, show them the four paragraphs as plain text and get an OK (or edits) first — it's much cheaper to revise text than a finished document. Skip this only if they asked for no check-ins.
+
 One page. Tone: motivated, confident, high-spirited — see the Tone section below for exactly what that means in practice, since "confident" is easy to overdo into generic hype.
 
 ## Tone & sentence structure
@@ -64,12 +68,20 @@ Read the full reference file before writing a cover letter if the tone isn't cli
 
 ## Using the script
 
-`scripts/docx_helpers.js` exports two functions for Node + the `docx` npm package (already installed in this environment — `require("docx")` directly, don't `npm install` first). **Neither function has any default identity values — every identity field is required and must be this specific applicant's real information**; both throw a clear error if you omit one, so a resume or cover letter can never accidentally go out with placeholder or stale contact info still in it.
+`scripts/docx_helpers.js` (in this skill's folder) exports two functions for Node + the `docx` npm package. Check what the environment has before using it, and take the first route that works:
+
+1. `node -e "require('docx')"` succeeds → `require` the helpers and use them directly.
+2. Node is available but `docx` isn't, and there is network access → install it somewhere writable, e.g. `npm install --prefix <scratch-folder> docx`, then run your build script with `NODE_PATH=<scratch-folder>/node_modules` set (Node resolves `docx` relative to the helper file, so running from the scratch folder alone is not enough).
+3. No Node or no network (e.g. a sandbox without internet) → if a docx skill/tool is available, use it and follow every format rule below by hand; otherwise deliver the resume and cover letter as formatted Markdown that follows the exact same structure, and tell the user a .docx couldn't be produced here and why.
+
+**Neither function has any default identity values — every identity field is required and must be this specific applicant's real information**; both throw a clear error if you omit one, so a resume or cover letter can never accidentally go out with placeholder or stale contact info still in it.
+
+The helpers also reject any LinkedIn/GitHub/website value that isn't a full `http://` or `https://` URL, so a broken link can't slip into the header.
 
 - `buildResume({ filename, name, phone, email, linkedin, github, website, summary, education, experience, experienceSectionTitle, projects, skills, publications, extraSections })` — `name`/`phone`/`email`/`linkedin`/`github`/`website` are this applicant's real details (all required); `summary` is a string (2-3 sentences, required); `education` is an array of `{ school, location, line, dates }`; `experienceSectionTitle` is an optional override for the Experience heading (e.g. "Relevant Experience — <domain>"); `experience` is an array of `{ title, dates, org, location, bullets }`; `projects` is `{ sectionTitle, items }`; `skills` is an array of `{ label, value }`; `publications` is an array of strings (optional, omit or pass `[]`); `extraSections` is an array of `{ title, items }` for any other optional section.
 - `buildCoverLetter({ filename, name, phone, email, linkedin, github, website, date, companyLines, positionTitle, paragraphs })` — identity fields as above, now including `github` (all required — the cover letter header carries the same LinkedIn | GitHub | Personal Website links as the resume); `companyLines` is an array of address lines, e.g. `["Hiring Team", "Company Name", "Street", "City, State ZIP, Country"]` (first line rendered bold); `positionTitle` is the role title — the bold "Re: Application for `<positionTitle>`" line and the "Dear Hiring Team," salutation are both generated automatically, so don't pass them separately; `paragraphs` must be an array of exactly 4 strings, in intro/expertise/application/closing order.
 
-Both write a `.docx` directly. After generating, render to PDF/JPG and look at it before delivering — see the docx skill's verification step (`soffice.py --convert-to pdf`, then `pdftoppm`) — to catch page overflow or broken hyperlinks before sending the file.
+Both write a `.docx` directly. After generating, convert to PDF and check it before delivering, to catch page overflow or broken hyperlinks: `soffice --headless --convert-to pdf <file>.docx` (LibreOffice; or a docx skill's own conversion helper), then confirm the cover letter is exactly one page (e.g. `pdfinfo`, or render with `pdftoppm` and look at it if you can view images). If no converter is available, say that the page-count check was skipped — never report it as passed.
 
 ## Checklist before delivering
 

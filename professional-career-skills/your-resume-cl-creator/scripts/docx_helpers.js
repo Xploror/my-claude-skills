@@ -93,8 +93,20 @@ function requireField(obj, field, fnName) {
   if (!obj[field] || (typeof obj[field] === "string" && !obj[field].trim())) {
     throw new Error(
       `${fnName}: \`${field}\` is required. This module never defaults to a previous user's identity -- ` +
-      `supply this specific applicant's real ${field} (use a bracketed placeholder like "[Your ${field}]" only if the real value is genuinely unknown yet).`
+      `supply this specific applicant's real ${field} (use a bracketed placeholder like "[Your ${field}]" only if the real value is genuinely unknown yet; link fields -- linkedin/github/website -- must always be real https:// URLs).`
     );
+  }
+}
+
+// Header links must be full URLs -- a bare "linkedin.com/in/x" becomes a broken
+// relative link in Word, so fail before the file is written.
+function requireUrls(obj, fields, fnName) {
+  for (const field of fields) {
+    if (!/^https?:\/\/\S+$/i.test(String(obj[field]).trim())) {
+      throw new Error(
+        `${fnName}: \`${field}\` must be a full URL starting with http:// or https:// (got ${JSON.stringify(obj[field])}).`
+      );
+    }
   }
 }
 
@@ -119,6 +131,7 @@ function buildResume({
 }) {
   const identity = { name, phone, email, linkedin, github, website };
   for (const field of Object.keys(identity)) requireField(identity, field, "buildResume");
+  requireUrls(identity, ["linkedin", "github", "website"], "buildResume");
   requireField({ summary }, "summary", "buildResume");
 
   const children = [
@@ -226,6 +239,7 @@ function buildCoverLetter({
 }) {
   const identity = { name, phone, email, linkedin, github, website };
   for (const field of Object.keys(identity)) requireField(identity, field, "buildCoverLetter");
+  requireUrls(identity, ["linkedin", "github", "website"], "buildCoverLetter");
   if (!Array.isArray(paragraphs) || paragraphs.length !== 4) {
     throw new Error("buildCoverLetter: `paragraphs` must be an array of exactly 4 strings (intro, expertise, application, closing).");
   }
