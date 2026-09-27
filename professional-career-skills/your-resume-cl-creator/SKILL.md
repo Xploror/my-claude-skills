@@ -1,5 +1,5 @@
 ---
-name: your-resume-cl-creator
+name: "your-resume-cl-creator"
 description: Builds ATS-tailored resumes and one-page cover letters for a specific job application, following a fixed format standard (mandatory Summary section, fixed four-paragraph cover-letter structure, exact header/address/salutation formatting, and a specific confident tone). Fully generic and anonymous — works for any applicant in any field; every identity detail (name, contact info, education, experience) is supplied fresh per use, never assumed or reused from a prior application. Always use this skill whenever the user asks to build, generate, update, or tailor a resume, CV, or cover letter for a job, company, or role — including as part of a "crack it" job-application workflow, a bare "cover letter" request, or "force crack it" — even if they don't say "use the skill" or name it explicitly. This is the required format for every resume/cover-letter output; do not fall back to ad-hoc formatting.
 ---
 
@@ -29,7 +29,7 @@ Exactly these sections, **in this order**:
 
 Everything else — publications, certifications, awards, leadership — is optional. Include it only when it strengthens this specific application; a resume is complete without it.
 
-Reference format/style (bullet density, date-right-aligned header rows, degree/company line formatting): see `references/example-resume-format.md` — a fully placeholder-based template, not any real person's resume. The Summary section is the one addition on top of a typical resume's structure — many applicants' existing resumes won't already have one, but every resume built through this skill must add it.
+Reference format/style (bullet density, date-right-aligned header rows, degree/company line formatting): see `references/example-resume-format.md` — a fully placeholder-based template, not any real person's resume. The Summary section is the one addition on top of a typical resume's structure — many applicants' existing resumes won't already have one, but every resume built through this skill must add it. If you're hand-rolling a resume without the script (rare — prefer the script), keep the date/location column genuinely flush against the page's right margin, not just roughly right-of-center; `scripts/docx_helpers.js` computes this correctly from the document's real margins, so lean on it rather than approximating.
 
 ## Cover letter format
 
@@ -43,7 +43,7 @@ Reference format/style (bullet density, date-right-aligned header rows, degree/c
 **Header block, top to bottom, in this exact order:**
 1. Name (bold)
 2. Phone | Email
-3. LinkedIn | Personal Website — as hyperlinks, placed here near the top (not at the bottom of the letter). GitHub is resume-only; leave it out of the cover letter.
+3. LinkedIn | Github | Personal Website — as hyperlinks, placed here near the top (not at the bottom of the letter).
 4. Date
 5. "Hiring Team" + company name + full mailing address (always address it to "Hiring Team" — never guess an individual's name unless the user has explicitly supplied one)
 6. **"Re: Application for `<Position Title>`" — always bold.**
@@ -67,7 +67,7 @@ Read the full reference file before writing a cover letter if the tone isn't cli
 `scripts/docx_helpers.js` exports two functions for Node + the `docx` npm package (already installed in this environment — `require("docx")` directly, don't `npm install` first). **Neither function has any default identity values — every identity field is required and must be this specific applicant's real information**; both throw a clear error if you omit one, so a resume or cover letter can never accidentally go out with placeholder or stale contact info still in it.
 
 - `buildResume({ filename, name, phone, email, linkedin, github, website, summary, education, experience, experienceSectionTitle, projects, skills, publications, extraSections })` — `name`/`phone`/`email`/`linkedin`/`github`/`website` are this applicant's real details (all required); `summary` is a string (2-3 sentences, required); `education` is an array of `{ school, location, line, dates }`; `experienceSectionTitle` is an optional override for the Experience heading (e.g. "Relevant Experience — <domain>"); `experience` is an array of `{ title, dates, org, location, bullets }`; `projects` is `{ sectionTitle, items }`; `skills` is an array of `{ label, value }`; `publications` is an array of strings (optional, omit or pass `[]`); `extraSections` is an array of `{ title, items }` for any other optional section.
-- `buildCoverLetter({ filename, name, phone, email, linkedin, website, date, companyLines, positionTitle, paragraphs })` — identity fields as above (no `github` here, by design); `companyLines` is an array of address lines, e.g. `["Hiring Team", "Company Name", "Street", "City, State ZIP, Country"]` (first line rendered bold); `positionTitle` is the role title — the bold "Re: Application for `<positionTitle>`" line and the "Dear Hiring Team," salutation are both generated automatically, so don't pass them separately; `paragraphs` must be an array of exactly 4 strings, in intro/expertise/application/closing order.
+- `buildCoverLetter({ filename, name, phone, email, linkedin, github, website, date, companyLines, positionTitle, paragraphs })` — identity fields as above, now including `github` (all required — the cover letter header carries the same LinkedIn | GitHub | Personal Website links as the resume); `companyLines` is an array of address lines, e.g. `["Hiring Team", "Company Name", "Street", "City, State ZIP, Country"]` (first line rendered bold); `positionTitle` is the role title — the bold "Re: Application for `<positionTitle>`" line and the "Dear Hiring Team," salutation are both generated automatically, so don't pass them separately; `paragraphs` must be an array of exactly 4 strings, in intro/expertise/application/closing order.
 
 Both write a `.docx` directly. After generating, render to PDF/JPG and look at it before delivering — see the docx skill's verification step (`soffice.py --convert-to pdf`, then `pdftoppm`) — to catch page overflow or broken hyperlinks before sending the file.
 
@@ -77,7 +77,7 @@ Both write a `.docx` directly. After generating, render to PDF/JPG and look at i
 - [ ] Resume: Summary section present, right after the header, tailored to this role
 - [ ] Resume: section order is Header → Summary → Education → Experience → Projects → Technical Skills (+ optional extras after)
 - [ ] Resume: LinkedIn, GitHub, Website all hyperlinked in the header
-- [ ] Cover letter: LinkedIn + Website hyperlinked near the top of the header block (no GitHub)
+- [ ] Cover letter: LinkedIn, GitHub, and Website all hyperlinked near the top of the header block (same three links as the resume)
 - [ ] Cover letter: "Re: Application for..." line is bold
 - [ ] Cover letter: addressed "Dear Hiring Team,"
 - [ ] Cover letter: exactly 4 body paragraphs in the intro/expertise/application/closing order

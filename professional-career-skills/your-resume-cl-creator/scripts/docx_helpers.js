@@ -10,7 +10,7 @@
 
 const {
   Document, Packer, Paragraph, TextRun, ExternalHyperlink,
-  AlignmentType, BorderStyle, TabStopType, TabStopPosition,
+  AlignmentType, BorderStyle, TabStopType,
 } = require("docx");
 
 const NAME_SIZE = 32;
@@ -18,6 +18,21 @@ const HEAD_SIZE = 20;
 const SUB_SIZE = 18;
 const BODY_SIZE = 18;
 const CL_SIZE = 21;
+
+// BUG FIX (2026-09-20): the `docx` library's TabStopPosition.MAX is a HARDCODED
+// constant (9026 twips) computed for the library's own default page margins --
+// it does NOT adapt to whatever margins a document actually sets. This resume
+// template uses tight custom margins (620 twips/side, see RESUME_MARGIN below)
+// to fit more content on one page, so using TabStopPosition.MAX for the
+// right-aligned date/location tab stop left a ~1.37in gap before the true right
+// margin -- dates/locations looked shifted left instead of flush right against
+// the page edge. Fix: compute the right-tab position from THIS document's own
+// page width and margins (pageWidth - leftMargin - rightMargin), every time.
+// If RESUME_MARGIN or the page width below is ever changed, RESUME_RIGHT_TAB
+// must be recomputed the same way -- never swap back to TabStopPosition.MAX.
+const RESUME_PAGE_WIDTH = 12240; // Letter width, twips (8.5in)
+const RESUME_MARGIN = 620;       // matches the page.margin values in buildResume() below
+const RESUME_RIGHT_TAB = RESUME_PAGE_WIDTH - RESUME_MARGIN * 2; // = 11000
 
 function hyperlink(text, url, size = BODY_SIZE) {
   return new ExternalHyperlink({
@@ -37,7 +52,7 @@ function sectionHeading(text) {
 function jobHeader(left, right) {
   return new Paragraph({
     spacing: { before: 120, after: 20 },
-    tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+    tabStops: [{ type: TabStopType.RIGHT, position: RESUME_RIGHT_TAB }],
     children: [
       new TextRun({ text: left, bold: true, size: SUB_SIZE }),
       new TextRun({ text: `\t${right}`, italics: true, size: SUB_SIZE }),
@@ -48,7 +63,7 @@ function jobHeader(left, right) {
 function subHeader(left, right) {
   return new Paragraph({
     spacing: { after: 40 },
-    tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+    tabStops: [{ type: TabStopType.RIGHT, position: RESUME_RIGHT_TAB }],
     children: [
       new TextRun({ text: left, italics: true, size: BODY_SIZE }),
       new TextRun({ text: `\t${right}`, italics: true, size: BODY_SIZE }),
@@ -164,8 +179,13 @@ function buildResume({
       {
         properties: {
           page: {
-            size: { width: 12240, height: 15840 },
-            margin: { top: 620, bottom: 620, left: 620, right: 620 },
+            // NOTE: width and left/right margins here MUST stay in sync with
+            // RESUME_PAGE_WIDTH / RESUME_MARGIN above -- those feed RESUME_RIGHT_TAB,
+            // the right-aligned tab stop used by jobHeader()/subHeader() for the
+            // date/location columns. Changing margins without updating that constant
+            // reintroduces the "dates not right-aligned" bug fixed on 2026-09-20.
+            size: { width: RESUME_PAGE_WIDTH, height: 15840 },
+            margin: { top: RESUME_MARGIN, bottom: RESUME_MARGIN, left: RESUME_MARGIN, right: RESUME_MARGIN },
           },
         },
         children,
@@ -189,7 +209,11 @@ function clPara(text, opts = {}) {
 /**
  * buildCoverLetter({
  *   filename,
- *   name, phone, email, linkedin, website,   // ALL REQUIRED -- this applicant's real identity/contact info (no GitHub in the cover letter, by design)
+ *   name, phone, email, linkedin, github, website,   // ALL REQUIRED -- this applicant's real identity/contact info
+ *   // CHANGED 2026-09-20 (user request): GitHub is now included in the cover letter header,
+ *   // matching the resume's header. Previously GitHub was resume-only "by design" -- that
+ *   // exclusion is retired; every identity link that appears on the resume now also appears
+ *   // on the cover letter. Do not silently drop GitHub from the header again.
  *   date,
  *   companyLines: ["Hiring Team", "Company Name", "Street", "City, State ZIP, Country"],
  *   positionTitle,                 // e.g. "Control Engineer for Actuators and Sensors" -- Re: line is built from this
@@ -197,10 +221,10 @@ function clPara(text, opts = {}) {
  * })
  */
 function buildCoverLetter({
-  filename, name, phone, email, linkedin, website,
+  filename, name, phone, email, linkedin, github, website,
   date, companyLines, positionTitle, paragraphs,
 }) {
-  const identity = { name, phone, email, linkedin, website };
+  const identity = { name, phone, email, linkedin, github, website };
   for (const field of Object.keys(identity)) requireField(identity, field, "buildCoverLetter");
   if (!Array.isArray(paragraphs) || paragraphs.length !== 4) {
     throw new Error("buildCoverLetter: `paragraphs` must be an array of exactly 4 strings (intro, expertise, application, closing).");
@@ -222,6 +246,8 @@ function buildCoverLetter({
       spacing: { after: 240 },
       children: [
         hyperlink("LinkedIn", linkedin, CL_SIZE),
+        new TextRun({ text: " | ", size: CL_SIZE }),
+        hyperlink("GitHub", github, CL_SIZE),
         new TextRun({ text: " | ", size: CL_SIZE }),
         hyperlink("Personal Website", website, CL_SIZE),
       ],
